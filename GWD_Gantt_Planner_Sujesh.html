@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GWD Gantt Planner Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1117;--surface:#181c24;--surface2:#1e2330;--surface3:#252b3a;
+  --border:#252d3d;--accent:#4f8ef7;--accent2:#a78bfa;
+  --text:#e2e8f0;--muted:#64748b;
+  --red:#ef4444;--green:#22c55e;--orange:#f97316;--yellow:#eab308;
+  --cb:#c0392b;--ob:#2471a3;--cl:#9a7d0a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+/* HEADER & PLAN TABS */
+.hdr{background:linear-gradient(135deg,#0c1420 0%,#0f1827 100%);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;gap:16px;flex-shrink:0}
+.logo{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:var(--accent);letter-spacing:-0.5px}
+.logo em{color:var(--accent2);font-style:normal}
+.hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.hdr-btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.hdr-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.hdr-btn.primary:hover{opacity:.85}
+.hdr-btn.ghost{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.hdr-btn.ghost:hover{color:var(--text);border-color:var(--accent)}
+.hdr-btn.gold{background:rgba(234, 179, 8, 0.1);color:var(--yellow);border:1px solid var(--yellow)}
+.hdr-btn.gold:hover{background:var(--yellow);color:#000}
+.hdr-btn.blue{background:rgba(79, 142, 247, 0.1);color:var(--accent);border:1px solid var(--accent)}
+.hdr-btn.blue:hover{background:var(--accent);color:#fff}
+
+.plan-tabs-wrap {display:flex; background:#080c14; border-bottom:1px solid var(--border); flex-shrink:0; overflow-x:auto;}
+.plan-tabs-wrap::-webkit-scrollbar {height:0;}
+.plan-tab {padding:8px 16px; font-size:11px; font-weight:600; color:var(--muted); cursor:pointer; border-right:1px solid var(--border); display:flex; align-items:center; gap:8px; transition:background 0.2s;}
+.plan-tab:hover {background:var(--surface2);}
+.plan-tab.active {background:var(--bg); color:var(--accent); border-bottom:2px solid var(--accent); margin-bottom:-1px;}
+.plan-tab-close {font-size:14px; opacity:0.5; transition:0.2s; line-height:1;}
+.plan-tab-close:hover {opacity:1; color:var(--red);}
+.plan-add {padding:8px 16px; font-size:11px; font-weight:600; color:var(--muted); cursor:pointer; transition:0.2s; white-space:nowrap;}
+.plan-add:hover {color:var(--text); background:var(--surface2);}
+
+/* BODY */
+.body{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR (RESIZABLE) */
+.sidebar{
+  width: 380px; 
+  min-width: 320px;
+  max-width: 50vw; 
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  resize: horizontal; 
+  overflow: auto; 
+}
+.sidebar::-webkit-scrollbar {width: 0px; height: 0px;}
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all .2s;font-family:'Space Mono',monospace}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent);background:rgba(79,142,247,.05)}
+.panel{display:none;flex-direction:column;flex:1;overflow-y:auto;padding:16px;gap:14px}
+.panel.on{display:flex}
+
+/* FORM ELEMENTS */
+.sec{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.fld{display:flex;flex-direction:column;gap:4px}
+.fld label{font-size:11px;color:var(--muted);font-weight:500}
+.inp,.sel,.ta{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:12px;font-family:'DM Sans',sans-serif;width:100%;transition:border .2s;outline:none}
+.inp:focus,.sel:focus,.ta:focus{border-color:var(--accent)}
+.ta{resize:vertical;line-height:1.6;font-family:'Space Mono',monospace;font-size:11px}
+.row2{display:flex;gap:8px}
+.row2>*{flex:1}
+
+/* ARTIST LIST */
+.alist{display:flex;flex-direction:column;gap:4px}
+.arow{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px}
+.adot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.arow input{flex:1;background:transparent;border:none;color:var(--text);font-size:12px;outline:none;font-family:'DM Sans',sans-serif}
+.arow select{background:transparent;border:none;color:var(--muted);font-size:11px;cursor:pointer;outline:none}
+.btn-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:0 2px;line-height:1;transition:color .15s}
+.btn-rm:hover{color:var(--red)}
+.btn-add-row{background:var(--surface2);border:1px dashed var(--border);border-radius:6px;color:var(--muted);font-size:12px;padding:7px;cursor:pointer;text-align:center;transition:all .2s;width:100%;margin-top:4px}
+.btn-add-row:hover{border-color:var(--accent);color:var(--accent)}
+
+/* TASK TABLE */
+.task-table-wrap{border:1px solid var(--border);border-radius:8px;overflow-x:auto;}
+.task-table{width:100%;border-collapse:collapse;font-size:11px}
+.task-table th{background:var(--surface3);padding:6px 8px;text-align:left;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.task-table td{padding:5px 8px;border-bottom:1px solid #1a1f2e;vertical-align:middle; transition: background 0.1s;}
+.task-table tr:last-child td{border-bottom:none}
+.task-table tr:hover td{background:var(--surface3)}
+
+/* DRAG & DROP UI */
+.drag-handle {cursor:grab; padding-right:6px; color:var(--muted); font-size:14px; user-select:none; opacity:0.5; transition:opacity 0.2s;}
+.task-table tr:hover .drag-handle {opacity:1;}
+.drag-handle:active {cursor:grabbing;}
+.dragging td {opacity:0.3; background:var(--surface2) !important;}
+.drag-over td {border-top:2px solid var(--accent) !important; background:rgba(79,142,247,0.05) !important;}
+
+.task-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle;flex-shrink:0}
+.phase-tag{display:inline-block;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:600}
+.tag-tb{background:#1f2937;color:#9ca3af}
+.tag-cb{background:#3d1010;color:#f87171}
+.tag-ob{background:#0e2040;color:#93c5fd}
+.tag-cl{background:#2d2200;color:#fcd34d}
+.task-name-cell{word-break:break-word;white-space:normal;}
+
+/* ADD TASK FORM & BUTTONS */
+.add-task-form{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.add-task-form .inp,.add-task-form .sel{background:var(--bg);border:1px solid var(--border);font-size:12px;padding:6px 9px}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:700;padding:8px;cursor:pointer;width:100%;font-family:'Space Mono',monospace;letter-spacing:.5px;transition:opacity .15s}
+.btn-primary:hover{opacity:.88}
+.btn-secondary{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:8px;cursor:pointer;width:100%;transition:all .2s}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+
+/* LEAVE SECTION */
+.leave-form{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:7px}
+.leave-form .inp,.leave-form .sel{background:var(--bg);border:1px solid var(--border);font-size:11px;padding:5px 8px}
+.leave-log{display:flex;flex-direction:column;gap:3px;max-height:220px;overflow-y:auto}
+.litem{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:11px}
+.lbadge{padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;white-space:nowrap;flex-shrink:0}
+.lbadge.pl{background:#0e2040;color:#93c5fd}
+.lbadge.un{background:#3d1010;color:#f87171}
+.lbadge.all{background:#2d2200;color:#fcd34d}
+.linfo{flex:1;min-width:0}
+.lname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.ldate{font-size:10px;color:var(--muted)}
+
+/* STATS */
+.stats{display:flex;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--surface)}
+.stat{flex:1;padding:7px 10px;border-right:1px solid var(--border);text-align:center}
+.stat:last-child{border-right:none}
+.stat-n{font-family:'Space Mono',monospace;font-size:15px;font-weight:700}
+.stat-l{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* GANTT */
+.gantt-wrap{flex:1;overflow:auto;background:var(--bg); position: relative;}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);gap:10px}
+.empty-icon{font-size:52px;opacity:.2}
+.legend{display:flex;gap:12px;align-items:center;padding:7px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap;flex-shrink:0}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
+.ld{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.orp{margin:8px 12px;background:#150808;border:1px solid #7f1d1d;border-radius:8px;padding:9px 12px}
+.orp-t{font-family:'Space Mono',monospace;font-size:10px;color:#f87171;font-weight:700;margin-bottom:5px}
+.orp-i{font-size:11px;color:#fca5a5;padding:3px 0;display:flex;gap:6px; line-height: 1.4;}
+.orp-i::before{content:"⚠";font-size:9px;flex-shrink:0;margin-top:1px}
+.orp-hl{color:#fff; font-weight: 600; background: rgba(255,255,255,0.1); padding: 0 4px; border-radius: 3px;}
+
+/* GANTT TABLE (WITH STICKY COLUMNS) */
+#gw{padding-bottom:20px; min-width:max-content; position:relative;}
+.gt{border-collapse:separate; border-spacing:0; font-size:11px}
+.gt td, .gt th{padding:0; border-bottom:1px solid #161b28; border-right:1px solid #161b28;}
+
+/* Sticky Columns */
+.cg { position: sticky; left: 0; z-index: 10; width: 4px; min-width: 4px; border-right: none !important; }
+.ca { position: sticky; left: 4px; z-index: 10; width: 115px; min-width: 115px; background: #111520; border-right: none !important; }
+.ct { position: sticky; left: 119px; z-index: 10; width: 190px; min-width: 190px; background: #111520; border-right: 2px solid #333d52 !important; }
+
+/* Ensure column headers stay above normal sticky rows */
+.ghdr.cg, .ghdr.ca, .ghdr.ct { z-index: 20; background: #090c14; }
+
+.ghdr{background:#090c14;color:var(--muted);font-size:9px;text-align:center;vertical-align:middle;font-family:'Space Mono',monospace;white-space:nowrap}
+.ghdr-l{padding:0 8px;text-align:left;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:var(--text);background:#090c14}
+.g-month{background:#0e1220;color:#475569;font-size:9px;font-family:'Space Mono',monospace;text-align:center}
+.g-row td{height:16px;vertical-align:middle}
+.g-artist{padding:0 8px;font-weight:700;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;color:#94a3b8}
+.g-task{padding:0 8px;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.g-bar{text-align:center;vertical-align:middle;font-size:7px}
+.g-sep td{height:2px;background:#1a2235;border:none}
+.g-sec td{height:18px;vertical-align:middle;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:700}
+.cw{width:13px;min-width:13px}
+.cd{width:20px;min-width:20px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="logo">GWD <em>GANTT</em></div>
+  <div style="color:var(--muted);font-size:11px">Asset Production Planner</div>
+  <div class="hdr-right">
+    <button class="hdr-btn gold" onclick="autoBalanceTasks()">✨ Auto-Balance Tasks</button>
+    <button class="hdr-btn ghost" onclick="exportCSV()">⬇ Export CSV</button>
+    <button class="hdr-btn blue" onclick="exportViewerHTML()">🔗 Export Viewer</button>
+    <button class="hdr-btn primary" onclick="generate()">▶ Generate Gantt</button>
+  </div>
+</div>
+
+<!-- PLAN TABS -->
+<div class="plan-tabs-wrap" id="planTabsWrap">
+  <!-- Dynamic Plan Tabs inject here -->
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+<!-- ══ SIDEBAR ══ -->
+<div class="sidebar">
+  <div class="tabs">
+    <div class="tab on"  onclick="showTab('config')">CONFIG</div>
+    <div class="tab"     onclick="showTab('artists')">ARTISTS</div>
+    <div class="tab"     onclick="showTab('tasks')">TASKS</div>
+    <div class="tab"     onclick="showTab('leaves')">LEAVES</div>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="panel on" id="tab-config">
+    <div>
+      <div class="sec">📅 Timeline</div>
+      <div class="fld"><label>Production Start</label><input class="inp" type="date" id="prodStart" value="2026-03-01"></div>
+      <div class="fld" style="margin-top:8px"><label>Tech Beta Deadline</label><input class="inp" type="date" id="dlTB" value="2026-03-31"></div>
+      <div class="fld" style="margin-top:8px"><label>Closed Beta Deadline</label><input class="inp" type="date" id="dlCB" value="2026-04-30"></div>
+      <div class="fld" style="margin-top:8px"><label>Open Beta Deadline</label><input class="inp" type="date" id="dlOB" value="2026-06-30"></div>
+      <div class="fld" style="margin-top:8px"><label>Commercial Launch Deadline</label><input class="inp" type="date" id="dlCL" value="2026-09-30"></div>
+    </div>
+    <div>
+      <div class="sec">🏖 Public Holidays</div>
+      <div class="fld"><textarea class="ta" id="holidayInput" style="min-height:100px" placeholder="YYYY-MM-DD, Name"></textarea></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px">One per line: YYYY-MM-DD, Name</div>
+    </div>
+    <div style="margin-top:auto;padding-top:8px;display:flex;flex-direction:column;gap:6px">
+      <button class="btn-primary" onclick="generate()">▶ GENERATE GANTT</button>
+      <button class="btn-secondary" onclick="exportCSV()">⬇ Export Schedule CSV</button>
+    </div>
+  </div>
+
+  <!-- ARTISTS -->
+  <div class="panel" id="tab-artists">
+    <div>
+      <div class="sec">👥 Artist Roster</div>
+      <div class="alist" id="artistList"></div>
+      <button class="btn-add-row" onclick="addArtist()">+ Add Artist</button>
+    </div>
+    <div style="margin-top:auto;padding-top:8px">
+      <button class="btn-primary" onclick="generate()">▶ GENERATE GANTT</button>
+    </div>
+  </div>
+
+  <!-- TASKS -->
+  <div class="panel" id="tab-tasks">
+    <!-- Add task form -->
+    <div>
+      <div class="sec">➕ Add Task</div>
+      <div class="add-task-form">
+        <div class="fld">
+          <label>Artist</label>
+          <select class="sel" id="newTaskArtist"></select>
+        </div>
+        <div class="fld">
+          <label>Task Name</label>
+          <input class="inp" type="text" id="newTaskName" placeholder="e.g. Tyagi Bhai Character">
+        </div>
+        <div class="row2">
+          <div class="fld">
+            <label>Phase</label>
+            <select class="sel" id="newTaskPhase">
+              <option value="Technical Beta">Technical Beta</option>
+              <option value="Closed Beta">Closed Beta</option>
+              <option value="Open Beta">Open Beta</option>
+              <option value="Commercial Launch">Commercial Launch</option>
+            </select>
+          </div>
+          <div class="fld">
+            <label>Man Days</label>
+            <input class="inp" type="number" id="newTaskDays" value="15" min="1" max="200">
+          </div>
+        </div>
+        <button class="btn-primary" onclick="addTask()">+ Add Task</button>
+      </div>
+    </div>
+
+    <!-- Task list grouped by artist -->
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div class="sec" style="margin-bottom:0">📋 Task List <span style="text-transform:none;letter-spacing:normal;color:var(--muted);font-weight:normal">(Drag to priority)</span></div>
+        <select class="sel" id="taskFilterArtist" style="flex:1;font-size:11px;padding:4px 8px" onchange="renderTaskTable()">
+          <option value="">All Artists</option>
+        </select>
+        <select class="sel" id="taskFilterPhase" style="flex:1;font-size:11px;padding:4px 8px" onchange="renderTaskTable()">
+          <option value="">All Phases</option>
+          <option value="Technical Beta">TB</option>
+          <option value="Closed Beta">CB</option>
+          <option value="Open Beta">OB</option>
+          <option value="Commercial Launch">CL</option>
+        </select>
+      </div>
+      <div class="task-table-wrap">
+        <table class="task-table">
+          <thead>
+            <tr><th>Artist</th><th>Task</th><th>Phase</th><th>Days</th><th></th></tr>
+          </thead>
+          <tbody id="taskTableBody"></tbody>
+        </table>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px;text-align:right" id="taskCount"></div>
+    </div>
+
+    <!-- Bulk import fallback -->
+    <details style="margin-top:4px">
+      <summary style="font-size:11px;color:var(--muted);cursor:pointer;user-select:none">📥 Bulk import (CSV paste)</summary>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+        <textarea class="ta" id="bulkImport" style="min-height:80px" placeholder="Artist, Task Name, Phase, Mandays"></textarea>
+        <button class="btn-secondary" style="padding:6px" onclick="bulkImport()">Import</button>
+      </div>
+    </details>
+
+    <div style="margin-top:auto;padding-top:8px">
+      <button class="btn-primary" onclick="generate()">▶ GENERATE GANTT</button>
+    </div>
+  </div>
+
+  <!-- LEAVES -->
+  <div class="panel" id="tab-leaves">
+    <div>
+      <div class="sec">➕ Add Leave / Absence</div>
+      <div class="leave-form">
+        <div class="fld"><label style="font-size:10px;color:var(--muted)">Artist</label>
+          <select class="sel" id="leaveArtist"><option value="__all__">All Artists (Team Holiday)</option></select>
+        </div>
+        <div class="fld"><label style="font-size:10px;color:var(--muted)">Type</label>
+          <select class="sel" id="leaveType">
+            <option value="planned">🗓 Planned Leave</option>
+            <option value="unplanned">⚡ Unplanned Leave</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="fld"><label style="font-size:10px;color:var(--muted)">From</label><input class="inp" type="date" id="leaveFrom" value="2026-05-04"></div>
+          <div class="fld"><label style="font-size:10px;color:var(--muted)">To</label><input class="inp" type="date" id="leaveTo" value="2026-05-04"></div>
+        </div>
+        <input class="inp" type="text" id="leaveNote" placeholder="Note (optional)">
+        <button class="btn-primary" style="font-size:11px;padding:7px" onclick="addLeave()">+ Add Leave</button>
+      </div>
+    </div>
+
+    <div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <div class="sec" style="margin-bottom:0">📋 Leave Log</div>
+        <select class="sel" id="lfArtist" style="flex:1;font-size:11px;padding:3px 7px" onchange="renderLeaveLog()"><option value="">All</option></select>
+        <select class="sel" id="lfType" style="flex:1;font-size:11px;padding:3px 7px" onchange="renderLeaveLog()">
+          <option value="">All</option>
+          <option value="planned">Planned</option>
+          <option value="unplanned">Unplanned</option>
+        </select>
+      </div>
+      <div class="leave-log" id="leaveLog"></div>
+    </div>
+
+    <div style="margin-top:auto;padding-top:8px">
+      <button class="btn-primary" onclick="generate()">▶ GENERATE GANTT</button>
+    </div>
+  </div>
+</div><!-- /sidebar -->
+
+<!-- ══ RIGHT PANEL ══ -->
+<div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+  <div id="statsBar" style="display:none" class="stats">
+    <div class="stat"><div class="stat-n" id="st-tasks" style="color:#60a5fa">0</div><div class="stat-l">Tasks</div></div>
+    <div class="stat"><div class="stat-n" id="st-overruns" style="color:#f87171">0</div><div class="stat-l">Overruns</div></div>
+    <div class="stat"><div class="stat-n" id="st-planned" style="color:#fbbf24">0</div><div class="stat-l">Planned Leaves</div></div>
+    <div class="stat"><div class="stat-n" id="st-unplanned" style="color:#f87171">0</div><div class="stat-l">Unplanned</div></div>
+    <div class="stat"><div class="stat-n" id="st-wdays" style="color:#4ade80">0</div><div class="stat-l">Work Days</div></div>
+  </div>
+  <div class="gantt-wrap" id="ganttArea">
+    <div class="empty-state">
+      <div class="empty-icon">📊</div>
+      <div style="font-size:13px">Add tasks and click Generate</div>
+      <div style="font-size:11px;color:var(--muted)">Use the TASKS tab to build your plan</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /body -->
+
+<script>
+// ═══════════════════════════ DATA & MULTI-PLAN STATE ════════════════════════════
+const PALETTE=[
+  "#C0392B","#8E44AD","#2471A3","#1E8449","#D68910",
+  "#117A65","#1A5276","#6C3483","#B03A2E","#1F618D",
+  "#0E6655","#D35400","#7D3C98","#154360","#196F3D",
+  "#9A7D0A","#784212","#1B4F72","#4A235A","#7B241C",
+];
+
+// Active State Variables
+let artists=[];
+let tasks=[];
+let leaves=[];
+let taskId=1;
+let leaveId=1;
+
+// Plans Storage
+let plans = [];
+let activePlanId = null;
+
+// The default data to bootstrap the first plan
+const defaultArtists = [
+  {name:"Camila",group:"Character"}, {name:"Hexar ArtistA",group:"Character"},
+  {name:"Hexar ArtistB",group:"Character"}, {name:"POD8 ArtistA",group:"3D"},
+  {name:"POD8 ArtistB",group:"3D"}, {name:"Subinoy",group:"Character"},
+  {name:"Yash",group:"3D"}
+];
+
+const DEFAULT_TASKS_DATA=[
+  ["Hexar ArtistA", "Tyagi Bhai - Head", "Closed Beta", 10],
+  ["Hexar ArtistA", "Tyagi Bhai - Body", "Closed Beta", 3],
+  ["Hexar ArtistA", "Tyagi Contractor Epic", "Closed Beta", 10],
+  ["Subinoy", "Surkhi - Head", "Closed Beta", 10],
+  ["Subinoy", "Surkhi Bai - Body", "Closed Beta", 3],
+  ["Subinoy", "Surkhi Bai Saree Epic", "Closed Beta", 10],
+  ["Camila", "Bheem Cha-Cha - Head", "Closed Beta", 10],
+  ["Camila", "Bheem Cha-Cha - Body", "Closed Beta", 3],
+  ["Camila", "Bheem Pehelwan Epic", "Closed Beta", 10],
+  ["Hexar ArtistB", "Monty Cardozo - Head", "Closed Beta", 18],
+  ["Hexar ArtistB", "Monty Cardozo - Body", "Closed Beta", 3],
+  ["Hexar ArtistB", "Monty Smuggler Epic", "Closed Beta", 20],
+  ["Hexar ArtistA", "Boris - Head", "Open Beta", 2],
+  ["Hexar ArtistA", "Boris - Body", "Open Beta", 4],
+  ["Hexar ArtistA", "Borisalav Suit Epic", "Open Beta", 20],
+  ["Hexar ArtistB", "Marina - Head", "Open Beta", 18],
+  ["Hexar ArtistB", "Marina - Body", "Open Beta", 3],
+  ["Hexar ArtistB", "Marina Bounty Hunter Epic", "Open Beta", 20],
+  ["Subinoy", "TBD", "Commercial Launch", 18],
+  ["Subinoy", "TBD", "Commercial Launch", 3],
+  ["Subinoy", "TBD", "Commercial Launch", 20],
+  ["Camila", "TBD", "Commercial Launch", 18],
+  ["Camila", "TBD", "Commercial Launch", 3],
+  ["Camila", "TBD", "Commercial Launch", 20],
+  ["Hexar ArtistA", "TBD", "Commercial Launch", 18],
+  ["Hexar ArtistA", "TBD", "Commercial Launch", 3],
+  ["Hexar ArtistA", "TBD", "Commercial Launch", 20],
+  ["Hexar ArtistB", "TBD", "Commercial Launch", 18],
+  ["Hexar ArtistB", "TBD", "Commercial Launch", 3],
+  ["Hexar ArtistB", "TBD", "Commercial Launch", 20],
+  ["Yash", "Jeep", "Technical Beta", 1],
+  ["Yash", "Bult", "Technical Beta", 1],
+  ["Yash", "M4 Carbine", "Technical Beta", 1],
+  ["Yash", "AK47", "Technical Beta", 1],
+  ["POD8 ArtistA", "G36", "Open Beta", 15],
+  ["Yash", "Galil", "Open Beta", 1],
+  ["POD8 ArtistA", "M416", "Closed Beta", 15],
+  ["POD8 ArtistB", "SCAR-L", "Closed Beta", 15],
+  ["POD8 ArtistA", "AUG", "Open Beta", 15],
+  ["POD8 ArtistB", "GROZA", "Open Beta", 15],
+  ["Yash", "Sterling", "Technical Beta", 1],
+  ["Yash", "Uzi", "Technical Beta", 1],
+  ["Yash", "Desi Katta", "Technical Beta", 1],
+  ["Yash", "Beretta", "Technical Beta", 1],
+  ["POD8 ArtistA", "Dunali", "Technical Beta", 15],
+  ["Yash", "Saiga 12", "Closed Beta", 1],
+  ["POD8 ArtistA", "S12K", "Open Beta", 15],
+  ["POD8 ArtistB", "SR25", "Technical Beta", 15],
+  ["Yash", "SKS", "Technical Beta", 1],
+  ["POD8 ArtistA", "Dragunov", "Closed Beta", 15],
+  ["POD8 ArtistB", "ISHA", "Technical Beta", 15],
+  ["Yash", "Emily 303", "Technical Beta", 1],
+  ["Yash", "AWM", "Technical Beta", 1],
+  ["POD8 ArtistA", "M24", "Open Beta", 15],
+  ["POD8 ArtistB", "TBD", "Open Beta", 25],
+  ["POD8 ArtistA", "TBD", "Open Beta", 20],
+  ["POD8 ArtistB", "Vector", "Closed Beta", 15],
+  ["POD8 ArtistA", "MP5", "Closed Beta", 15],
+  ["POD8 ArtistB", "UMP45", "Closed Beta", 15],
+  ["POD8 ArtistA", "P90", "Open Beta", 15],
+  ["POD8 ArtistB", "G18", "Open Beta", 15],
+  ["POD8 ArtistA", "Hammer", "Technical Beta", 15],
+  ["POD8 ArtistB", "PRIZEFIGHTER", "Closed Beta", 15],
+  ["POD8 ArtistA", "BAT", "Closed Beta", 15],
+  ["Yash", "RPG-7", "Technical Beta", 1],
+  ["POD8 ArtistA", "RPD", "Open Beta", 15]
+];
+
+function initSystem() {
+  const defaultTasks = [];
+  let tId = 1;
+  DEFAULT_TASKS_DATA.forEach(([a,t,p,d])=>defaultTasks.push({id:tId++,artist:a,taskName:t,phase:p,mandays:d}));
+  
+  // Baseline sort for initial data
+  const PHASE_ORDER={"Technical Beta":0, "Closed Beta":1,"Open Beta":2,"Commercial Launch":3};
+  defaultTasks.sort((a,b)=>{
+    const ai=defaultArtists.findIndex(x=>x.name===a.artist);
+    const bi=defaultArtists.findIndex(x=>x.name===b.artist);
+    if(ai!==bi) return ai-bi;
+    return PHASE_ORDER[a.phase]-PHASE_ORDER[b.phase];
+  });
+
+  plans.push({
+    id: Date.now(),
+    name: "Main Release Plan",
+    artists: JSON.parse(JSON.stringify(defaultArtists)),
+    tasks: JSON.parse(JSON.stringify(defaultTasks)),
+    leaves: [],
+    taskId: tId,
+    leaveId: 1,
+    config: {
+      prodStart: "2026-03-01", dlTB: "2026-03-31", dlCB: "2026-04-30",
+      dlOB: "2026-06-30", dlCL: "2026-09-30",
+      holidays: "2026-05-01, Labour Day\n2026-06-07, Eid ul-Adha\n2026-08-15, Independence Day\n2026-08-27, Janmashtami\n2026-09-02, Ganesh Chaturthi\n2026-09-28, Dussehra"
+    }
+  });
+  
+  loadPlan(plans[0].id);
+}
+
+function saveCurrentPlan() {
+  if (!activePlanId) return;
+  const p = plans.find(x => x.id === activePlanId);
+  if (!p) return;
+  p.artists = JSON.parse(JSON.stringify(artists));
+  p.tasks = JSON.parse(JSON.stringify(tasks));
+  p.leaves = JSON.parse(JSON.stringify(leaves));
+  p.taskId = taskId;
+  p.leaveId = leaveId;
+  p.config = {
+    prodStart: document.getElementById('prodStart').value,
+    dlTB: document.getElementById('dlTB').value,
+    dlCB: document.getElementById('dlCB').value,
+    dlOB: document.getElementById('dlOB').value,
+    dlCL: document.getElementById('dlCL').value,
+    holidays: document.getElementById('holidayInput').value
+  };
+}
+
+function loadPlan(id) {
+  if (activePlanId) saveCurrentPlan();
+  activePlanId = id;
+  const p = plans.find(x => x.id === activePlanId);
+  if(!p) return;
+  
+  artists = JSON.parse(JSON.stringify(p.artists));
+  tasks = JSON.parse(JSON.stringify(p.tasks));
+  leaves = JSON.parse(JSON.stringify(p.leaves));
+  taskId = p.taskId;
+  leaveId = p.leaveId;
+
+  document.getElementById('prodStart').value = p.config.prodStart;
+  document.getElementById('dlTB').value = p.config.dlTB;
+  document.getElementById('dlCB').value = p.config.dlCB;
+  document.getElementById('dlOB').value = p.config.dlOB;
+  document.getElementById('dlCL').value = p.config.dlCL;
+  document.getElementById('holidayInput').value = p.config.holidays;
+
+  renderPlanTabs();
+  renderArtistList();
+  refreshTaskSelects();
+  refreshLeaveSelects();
+  setTimeout(generate, 50);
+}
+
+function renderPlanTabs() {
+  const wrap = document.getElementById('planTabsWrap');
+  let html = '';
+  plans.forEach(p => {
+    const isActive = p.id === activePlanId ? 'active' : '';
+    html += `
+      <div class="plan-tab ${isActive}" onclick="loadPlan(${p.id})" ondblclick="renamePlan(${p.id})" title="Double-click to rename">
+        ${p.name}
+        ${plans.length > 1 ? `<span class="plan-tab-close" onclick="deletePlan(event, ${p.id})">×</span>` : ''}
+      </div>`;
+  });
+  html += `<div class="plan-add" onclick="createNewPlan()">+ New Plan</div>`;
+  wrap.innerHTML = html;
+}
+
+function createNewPlan() {
+  saveCurrentPlan();
+  const name = prompt("Enter a name for the new plan:", `Plan Variant ${plans.length + 1}`);
+  if (!name) return;
+  
+  const currentPlan = plans.find(x => x.id === activePlanId);
+  const newId = Date.now();
+  plans.push({
+    id: newId,
+    name: name,
+    artists: JSON.parse(JSON.stringify(currentPlan.artists)), // Copy roster
+    tasks: [], // Empty schedule
+    leaves: [],
+    taskId: 1, leaveId: 1,
+    config: JSON.parse(JSON.stringify(currentPlan.config))
+  });
+  loadPlan(newId);
+}
+
+function renamePlan(id) {
+  const p = plans.find(x => x.id === id);
+  const newName = prompt("Rename plan to:", p.name);
+  if (newName && newName.trim()) {
+    p.name = newName.trim();
+    renderPlanTabs();
+  }
+}
+
+function deletePlan(e, id) {
+  e.stopPropagation();
+  if (plans.length <= 1) return;
+  if (!confirm("Are you sure you want to delete this plan?")) return;
+  plans = plans.filter(p => p.id !== id);
+  if (activePlanId === id) loadPlan(plans[0].id);
+  else renderPlanTabs();
+}
+
+
+// ═══════════════════════════ HELPERS ═════════════════════════
+function parseDate(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
+function dateKey(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function sameDay(a,b){return dateKey(a)===dateKey(b);}
+function fmtDate(d){return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
+function fmtShort(d){return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});}
+function lighten(hex,f){
+  let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  r=Math.round(r+(255-r)*f);g=Math.round(g+(255-g)*f);b=Math.round(b+(255-b)*f);
+  return`#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+function textCol(hex){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return(0.299*r+0.587*g+0.114*b)<145?'#ffffff':'#111111';
+}
+function getColor(ai,ti){return PALETTE[(ai*4+ti)%PALETTE.length];}
+
+// ═══════════════════════════ TABS ════════════════════════════
+function showTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',['config','artists','tasks','leaves'][i]===id));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('tab-'+id).classList.add('on');
+  if(id==='tasks'){refreshTaskSelects();renderTaskTable();}
+  if(id==='leaves'){refreshLeaveSelects();}
+  if(id==='artists'){renderArtistList();}
+}
+
+// ═══════════════════════════ ARTISTS ═════════════════════════
+function renderArtistList(){
+  document.getElementById('artistList').innerHTML=artists.map((a,i)=>`
+    <div class="arow">
+      <div class="adot" style="background:${PALETTE[(i*4)%PALETTE.length]}"></div>
+      <input value="${a.name}" onchange="artists[${i}].name=this.value;refreshAll()" placeholder="Name">
+      <select onchange="artists[${i}].group=this.value; generate()">
+        <option value="Character"${a.group==='Character'?' selected':''}>Char</option>
+        <option value="3D"${a.group==='3D'?' selected':''}>3D</option>
+      </select>
+      <button class="btn-rm" onclick="removeArtist(${i})">×</button>
+    </div>`).join('');
+}
+
+function addArtist(){
+  const group = '3D'; // Default grouping
+  const newName = `Artist ${artists.length + 1}`;
+  artists.push({name: newName, group: group});
+  
+  // Smart Onboarding Rebalance: Take tasks from the most loaded artist in the same group
+  const sameGroup = artists.filter(a => a.group === group && a.name !== newName);
+  if (sameGroup.length > 0) {
+     let taskCounts = {};
+     sameGroup.forEach(a => taskCounts[a.name] = 0);
+     tasks.forEach(t => { if(taskCounts[t.artist] !== undefined) taskCounts[t.artist]++; });
+     
+     let maxArtist = sameGroup[0].name;
+     for(let a of sameGroup){
+        if(taskCounts[a.name] > taskCounts[maxArtist]) maxArtist = a.name;
+     }
+     
+     let maxTasks = tasks.filter(t => t.artist === maxArtist);
+     for(let i=1; i<maxTasks.length; i+=2){
+        maxTasks[i].artist = newName;
+     }
+  }
+  
+  renderArtistList();
+  refreshAll();
+  generate();
+}
+
+function removeArtist(i){artists.splice(i,1);renderArtistList();refreshAll();}
+function refreshAll(){refreshTaskSelects();refreshLeaveSelects();}
+
+// ═══════════════════════════ AUTO BALANCE TASKS ═══════════════
+function autoBalanceTasks() {
+  const groups = ['Character', '3D'];
+  const PHASES = ["Technical Beta", "Closed Beta", "Open Beta", "Commercial Launch"];
+  
+  let yashExists = artists.find(a => a.name === "Yash");
+  if (!yashExists) {
+     artists.push({name: "Yash", group: "3D"});
+     renderArtistList();
+  }
+  
+  tasks.forEach(t => {
+     if (t.mandays === 1) {
+         t.artist = "Yash";
+     }
+  });
+
+  groups.forEach(g => {
+    const groupArtists = artists.filter(a => a.group === g).map(a => a.name);
+    if (groupArtists.length === 0) return;
+    
+    let overallLoads = {};
+    groupArtists.forEach(a => overallLoads[a] = 0);
+    
+    PHASES.forEach(phase => {
+       let phaseTasks = tasks.filter(t => {
+         if (t.mandays === 1) return false; 
+         const a = artists.find(ar => ar.name === t.artist);
+         return a && a.group === g && t.phase === phase;
+       });
+       
+       let phaseLoads = {};
+       groupArtists.forEach(a => phaseLoads[a] = 0);
+       
+       tasks.forEach(t => {
+          if (t.mandays === 1 && t.phase === phase && groupArtists.includes(t.artist)) {
+              phaseLoads[t.artist] += t.mandays;
+              overallLoads[t.artist] += t.mandays;
+          }
+       });
+       
+       if (g === 'Character') {
+           let bundles = [];
+           let bundleMap = {};
+           let tbdChunk = [];
+
+           phaseTasks.forEach(t => {
+               let keyMatch = t.taskName.match(/^[a-zA-Z0-9]+/);
+               let key = keyMatch ? keyMatch[0] : t.taskName;
+               if (t.taskName === "TBD") {
+                   tbdChunk.push(t);
+                   if (tbdChunk.length === 3) {
+                       bundles.push({ tasks: tbdChunk, mandays: tbdChunk.reduce((s, x) => s + x.mandays, 0) });
+                       tbdChunk = [];
+                   }
+               } else {
+                   if (!bundleMap[key]) {
+                       bundleMap[key] = { tasks: [], mandays: 0 };
+                       bundles.push(bundleMap[key]);
+                   }
+                   bundleMap[key].tasks.push(t);
+                   bundleMap[key].mandays += t.mandays;
+               }
+           });
+           
+           if (tbdChunk.length > 0) {
+               bundles.push({ tasks: tbdChunk, mandays: tbdChunk.reduce((s, x) => s + x.mandays, 0) });
+           }
+
+           bundles.sort((a, b) => b.mandays - a.mandays);
+
+           bundles.forEach(b => {
+               let minA = groupArtists[0];
+               for (let i = 1; i < groupArtists.length; i++) {
+                   let cand = groupArtists[i];
+                   if (phaseLoads[cand] < phaseLoads[minA]) {
+                       minA = cand;
+                   } else if (phaseLoads[cand] === phaseLoads[minA]) {
+                       if (overallLoads[cand] < overallLoads[minA]) minA = cand;
+                   }
+               }
+               b.tasks.forEach(t => t.artist = minA);
+               phaseLoads[minA] += b.mandays;
+               overallLoads[minA] += b.mandays;
+           });
+           
+       } else {
+           phaseTasks.sort((a, b) => b.mandays - a.mandays);
+           phaseTasks.forEach(t => {
+               let minA = groupArtists[0];
+               for (let i = 1; i < groupArtists.length; i++) {
+                   let cand = groupArtists[i];
+                   if (phaseLoads[cand] < phaseLoads[minA]) {
+                       minA = cand;
+                   } else if (phaseLoads[cand] === phaseLoads[minA]) {
+                       if (overallLoads[cand] < overallLoads[minA]) minA = cand;
+                   }
+               }
+               t.artist = minA;
+               phaseLoads[minA] += t.mandays;
+               overallLoads[minA] += t.mandays;
+           });
+       }
+    });
+  });
+  
+  // Re-sort baseline
+  const PHASE_ORDER={"Technical Beta":0, "Closed Beta":1,"Open Beta":2,"Commercial Launch":3};
+  tasks.sort((a,b)=>{
+    const ai=artists.findIndex(x=>x.name===a.artist);
+    const bi=artists.findIndex(x=>x.name===b.artist);
+    if(ai!==bi) return ai-bi;
+    return PHASE_ORDER[a.phase]-PHASE_ORDER[b.phase];
+  });
+  
+  refreshTaskSelects();
+  generate();
+  alert("✨ Smart Workloads Balanced!\n\n• Character tasks bundled to single artists.\n• 1-day tasks routed exclusively to Yash.\n• Load balanced efficiently!");
+}
+
+// ═══════════════════════════ TASKS & DRAG AND DROP ═══════════════════════════
+function refreshTaskSelects(){
+  const opts=artists.map(a=>`<option value="${a.name}">${a.name}</option>`).join('');
+  document.getElementById('newTaskArtist').innerHTML=opts;
+  document.getElementById('taskFilterArtist').innerHTML=`<option value="">All Artists</option>`+opts;
+  renderTaskTable();
+}
+
+function addTask(){
+  const artist=document.getElementById('newTaskArtist').value;
+  const taskName=document.getElementById('newTaskName').value.trim();
+  const phase=document.getElementById('newTaskPhase').value;
+  const mandays=parseInt(document.getElementById('newTaskDays').value)||10;
+  if(!taskName){document.getElementById('newTaskName').focus();return;}
+  tasks.push({id:taskId++,artist,taskName,phase,mandays});
+  document.getElementById('newTaskName').value='';
+  document.getElementById('newTaskName').focus();
+  renderTaskTable();
+  generate();
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.activeElement.id==='newTaskName') addTask();
+});
+
+function removeTask(id){tasks=tasks.filter(t=>t.id!==id);renderTaskTable();generate();}
+
+let draggedTaskId = null;
+
+function dragStart(e, id) {
+  draggedTaskId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => e.target.classList.add('dragging'), 0);
+}
+
+function dragOver(e) {
+  e.preventDefault();
+  const tr = e.target.closest('tr');
+  if (tr && !tr.classList.contains('dragging')) tr.classList.add('drag-over');
+}
+
+function dragLeave(e) {
+  const tr = e.target.closest('tr');
+  if (tr) tr.classList.remove('drag-over');
+}
+
+function dropTask(e, targetId) {
+  e.preventDefault();
+  const tr = e.target.closest('tr');
+  if (tr) tr.classList.remove('drag-over');
+  document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+
+  if (!draggedTaskId || draggedTaskId === targetId) return;
+
+  const fromIndex = tasks.findIndex(t => t.id === draggedTaskId);
+  const toIndex = tasks.findIndex(t => t.id === targetId);
+
+  if (fromIndex > -1 && toIndex > -1) {
+    const [movedTask] = tasks.splice(fromIndex, 1);
+    tasks.splice(toIndex, 0, movedTask);
+    renderTaskTable();
+    generate();
+  }
+  draggedTaskId = null;
+}
+
+function renderTaskTable(){
+  const fa=document.getElementById('taskFilterArtist')?.value||'';
+  const fp=document.getElementById('taskFilterPhase')?.value||'';
+  
+  const phTag=(p)=>{
+    if(p==='Technical Beta') return`<span class="phase-tag tag-tb">TB</span>`;
+    if(p==='Closed Beta') return`<span class="phase-tag tag-cb">CB</span>`;
+    if(p==='Open Beta') return`<span class="phase-tag tag-ob">OB</span>`;
+    return`<span class="phase-tag tag-cl">CL</span>`;
+  };
+
+  let filtered=tasks.filter(t=>{
+    if(fa&&t.artist!==fa) return false;
+    if(fp&&t.phase!==fp) return false;
+    return true;
+  });
+
+  const body=document.getElementById('taskTableBody');
+  if(!filtered.length){
+    body.innerHTML=`<tr><td colspan="5" class="no-tasks">No tasks yet — add one above</td></tr>`;
+    document.getElementById('taskCount').textContent='';
+    return;
+  }
+  
+  body.innerHTML=filtered.map(t=>{
+    const ai=artists.findIndex(a=>a.name===t.artist);
+    const c=PALETTE[(ai*4)%PALETTE.length];
+    return`<tr draggable="true" ondragstart="dragStart(event, ${t.id})" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropTask(event, ${t.id})">
+      <td style="padding:5px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">
+        <span class="drag-handle" title="Drag to change priority">⠿</span>
+        <span class="task-dot" style="background:${c}"></span>${t.artist}
+      </td>
+      <td class="task-name-cell" style="padding:4px 8px" title="${t.taskName}">${t.taskName}</td>
+      <td style="padding:4px 8px">${phTag(t.phase)}</td>
+      <td style="padding:4px 8px;color:var(--muted);text-align:right">${t.mandays}d</td>
+      <td style="padding:4px 6px;text-align:center"><button class="btn-rm" onclick="removeTask(${t.id})">×</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('taskCount').textContent=`${filtered.length} task${filtered.length>1?'s':''} shown`;
+}
+
+function bulkImport(){
+  const lines=document.getElementById('bulkImport').value.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('#'));
+  const PHASES=["Technical Beta","Closed Beta","Open Beta","Commercial Launch"];
+  let added=0;
+  lines.forEach(line=>{
+    const p=line.split(',').map(s=>s.trim());
+    if(p.length<4) return;
+    const [an,tn,ph,md]=p;
+    if(!PHASES.includes(ph)) return;
+    tasks.push({id:taskId++,artist:an,taskName:tn,phase:ph,mandays:parseInt(md)||10});
+    added++;
+  });
+  document.getElementById('bulkImport').value='';
+  renderTaskTable();
+  generate();
+  if(added>0) alert(`${added} tasks imported`);
+}
+
+// ═══════════════════════════ LEAVES ══════════════════════════
+function refreshLeaveSelects(){
+  const opts=`<option value="__all__">All Artists (Team Holiday)</option>`+artists.map(a=>`<option value="${a.name}">${a.name}</option>`).join('');
+  document.getElementById('leaveArtist').innerHTML=opts;
+  const fOpts=`<option value="">All Artists</option>`+artists.map(a=>`<option value="${a.name}">${a.name}</option>`).join('');
+  const lfa=document.getElementById('lfArtist');
+  if(lfa) lfa.innerHTML=fOpts;
+  renderLeaveLog();
+}
+
+function addLeave(){
+  const artist=document.getElementById('leaveArtist').value;
+  const type=document.getElementById('leaveType').value;
+  const from=document.getElementById('leaveFrom').value;
+  const to=document.getElementById('leaveTo').value;
+  const note=document.getElementById('leaveNote').value.trim();
+  if(!from||!to){alert('Select dates');return;}
+  if(from>to){alert('From must be before To');return;}
+  leaves.push({id:leaveId++,artist,type,from,to,note});
+  document.getElementById('leaveNote').value='';
+  renderLeaveLog();
+}
+
+function removeLeave(id){leaves=leaves.filter(l=>l.id!==id);renderLeaveLog();}
+
+function renderLeaveLog(){
+  const fa=document.getElementById('lfArtist')?.value||'';
+  const ft=document.getElementById('lfType')?.value||'';
+  let filtered=leaves.filter(l=>{
+    if(fa&&l.artist!=='__all__'&&l.artist!==fa) return false;
+    if(ft&&l.type!==ft) return false;
+    return true;
+  }).sort((a,b)=>a.from.localeCompare(b.from));
+  const el=document.getElementById('leaveLog');
+  if(!filtered.length){
+    el.innerHTML=`<div style="color:var(--muted);font-size:11px;padding:8px;text-align:center">No leaves recorded</div>`;
+    return;
+  }
+  el.innerHTML=filtered.map(l=>{
+    const isAll=l.artist==='__all__';
+    const days=Math.round((parseDate(l.to)-parseDate(l.from))/86400000)+1;
+    const cls=isAll?'all':l.type==='planned'?'pl':'un';
+    const lbl=isAll?'Holiday':l.type==='planned'?'Planned':'Unplanned';
+    return`<div class="litem">
+      <span class="lbadge ${cls}">${lbl}</span>
+      <div class="linfo">
+        <div class="lname">${isAll?'All Artists':l.artist}${l.note?' · '+l.note:''}</div>
+        <div class="ldate">${l.from===l.to?fmtDate(parseDate(l.from)):`${fmtDate(parseDate(l.from))} → ${fmtDate(parseDate(l.to))}`} · ${days}d</div>
+      </div>
+      <button class="btn-rm" onclick="removeLeave(${l.id})">×</button>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════ GENERATE ════════════════════════
+let lastSchedule=null;
+
+function buildNonWorkingDays(holidays){
+  const result={};
+  artists.forEach(a=>result[a.name]=new Set([...holidays]));
+  leaves.forEach(l=>{
+    let d=parseDate(l.from);const end=parseDate(l.to);
+    while(d<=end){
+      const dk=dateKey(d);
+      if(l.artist==='__all__') artists.forEach(a=>result[a.name].add(dk));
+      else if(result[l.artist]) result[l.artist].add(dk);
+      d=addDays(d,1);
+    }
+  });
+  return result;
+}
+
+function generate(){
+  saveCurrentPlan(); // Auto-save variables on generate
+  const prodStart=parseDate(document.getElementById('prodStart').value);
+  const dlTB=parseDate(document.getElementById('dlTB').value);
+  const dlCB=parseDate(document.getElementById('dlCB').value);
+  const dlOB=parseDate(document.getElementById('dlOB').value);
+  const dlCL=parseDate(document.getElementById('dlCL').value);
+
+  const holidays=new Set();
+  document.getElementById('holidayInput').value.split('\n').forEach(line=>{
+    const p=line.split(',')[0].trim();
+    if(p.match(/^\d{4}-\d{2}-\d{2}$/)) holidays.add(p);
+  });
+
+  const nwdMap=buildNonWorkingDays(holidays);
+  function isWorkingFor(artist,d){
+    if(d.getDay()===0||d.getDay()===6) return false;
+    return!nwdMap[artist]?.has(dateKey(d));
+  }
+
+  const PHASE_DL={"Technical Beta":dlTB,"Closed Beta":dlCB,"Open Beta":dlOB,"Commercial Launch":dlCL};
+
+  const artistTasks={};
+  artists.forEach(a=>artistTasks[a.name]=[]);
+  tasks.forEach(t=>{
+    if(artistTasks[t.artist]) artistTasks[t.artist].push({...t});
+    else artistTasks[t.artist]=[{...t}];
+  });
+
+  function scheduleArtist(artist){
+    const atasks=artistTasks[artist]||[];
+    const scheduled=[];
+    let cursor=new Date(prodStart);
+    while(cursor<=dlCL&&!isWorkingFor(artist,cursor)) cursor=addDays(cursor,1);
+    
+    atasks.forEach(({taskName,phase,mandays})=>{
+      const dl=PHASE_DL[phase];
+      let earliest=new Date(cursor);
+      while(earliest<=addDays(dlCL,120)&&!isWorkingFor(artist,earliest)) earliest=addDays(earliest,1);
+      
+      const taskDays=new Set();
+      let scan=new Date(earliest),rem=mandays;
+      while(rem>0&&scan<=addDays(dlCL,120)){
+        if(isWorkingFor(artist,scan)){taskDays.add(dateKey(scan));rem--;}
+        scan=addDays(scan,1);
+      }
+      const sorted=[...taskDays].sort();
+      const endDate=sorted.length?parseDate(sorted[sorted.length-1]):earliest;
+      scheduled.push({taskName,phase,taskDays,dl,mandays,startDate:earliest,endDate});
+      
+      cursor=addDays(endDate,1);
+      while(cursor<=addDays(dlCL,120)&&!isWorkingFor(artist,cursor)) cursor=addDays(cursor,1);
+    });
+    return scheduled;
+  }
+
+  const schedules={};
+  artists.forEach(a=>schedules[a.name]=scheduleArtist(a.name));
+
+  const allDays=[];
+  let d=new Date(prodStart);
+  while(d<=dlCL){allDays.push(new Date(d));d=addDays(d,1);}
+
+  lastSchedule={schedules,allDays,dlTB,dlCB,dlOB,dlCL,prodStart,holidays,nwdMap,isWorkingFor,leaves:[...leaves]};
+
+  let totalTasks=0,overruns=0;
+  artists.forEach(a=>{
+    totalTasks+=(schedules[a.name]||[]).length;
+    (schedules[a.name]||[]).forEach(({endDate,dl})=>{if(endDate>dl)overruns++;});
+  });
+  const planned=leaves.filter(l=>l.type==='planned').length;
+  const unplanned=leaves.filter(l=>l.type==='unplanned').length;
+  const wdays=allDays.filter(d=>d.getDay()!==0&&d.getDay()!==6&&!holidays.has(dateKey(d))).length;
+
+  document.getElementById('st-tasks').textContent=totalTasks;
+  document.getElementById('st-overruns').textContent=overruns;
+  document.getElementById('st-planned').textContent=planned;
+  document.getElementById('st-unplanned').textContent=unplanned;
+  document.getElementById('st-wdays').textContent=wdays;
+  document.getElementById('statsBar').style.display='flex';
+
+  renderGantt(lastSchedule);
+}
+
+// ═══════════════════════════ RENDER GANTT ════════════════════
+function renderGantt({schedules,allDays,dlTB,dlCB,dlOB,dlCL,prodStart,holidays,nwdMap,isWorkingFor}){
+  const area=document.getElementById('ganttArea');
+
+  const dayColorMap={};
+  artists.forEach((a,ai)=>{
+    (schedules[a.name]||[]).forEach(({taskDays,dl},ti)=>{
+      const hex=getColor(ai,ti);
+      taskDays.forEach(dk=>{if(!dayColorMap[dk])dayColorMap[dk]={hex,over:parseDate(dk)>dl};});
+    });
+  });
+
+  function calBg(d){
+    const dk=dateKey(d),wd=d.getDay();
+    if(sameDay(d,dlOB)||sameDay(d,dlCL)||sameDay(d,dlCB)||sameDay(d,dlTB)) return{bg:'#7c2d12',fc:'#fed7aa'};
+    if(wd===0) return{bg:'#180c0c',fc:'#7f1d1d'};
+    if(wd===6) return{bg:'#0c1520',fc:'#1e3a8a'};
+    if(holidays.has(dk)) return{bg:'#1a1200',fc:'#78350f'};
+    if(dayColorMap[dk]){
+      const{hex,over}=dayColorMap[dk];
+      if(over) return{bg:'#3d0606',fc:'#fca5a5'};
+      return{bg:lighten(hex,0.72),fc:textCol(lighten(hex,0.72))};
+    }
+    return d<=dlOB?{bg:'#0d1822',fc:'#374151'}:{bg:'#11100a',fc:'#374151'};
+  }
+
+  function artistCellBg(artist,d){
+    const dk=dateKey(d),wd=d.getDay();
+    if(sameDay(d,dlOB)||sameDay(d,dlCL)||sameDay(d,dlCB)||sameDay(d,dlTB)) return{bg:'#2d2d2d',type:'dl'};
+    if(wd===0) return{bg:'#160808',type:'sun'};
+    if(wd===6) return{bg:'#081018',type:'sat'};
+    if(holidays.has(dk)) return{bg:'#1a1200',type:'hol'};
+    const lv=leaves.filter(l=>(l.artist===artist||l.artist==='__all__')&&l.from<=dk&&l.to>=dk);
+    if(lv.length){
+      if(lv.some(l=>l.type==='unplanned')) return{bg:'#3d0808',type:'unplanned'};
+      return{bg:'#0c1a2e',type:'planned'};
+    }
+    return{bg:'#0f1117',type:'work'};
+  }
+
+  const overruns=[];
+  artists.forEach((a)=>{
+    (schedules[a.name]||[]).forEach(({taskName,phase,endDate,dl})=>{
+      if(endDate>dl){
+        let late=0,s=addDays(dl,1);
+        while(s<=endDate){if(isWorkingFor(a.name,s))late++;s=addDays(s,1);}
+        // NEW FEATURE: Note generated with New Deadline directly inside UI
+        overruns.push(`<strong>${a.name}</strong> · ${taskName} · <span class="orp-hl">New Deadline Needed: ${fmtShort(endDate)}</span> (Missed by ~${late}d)`);
+      }
+    });
+  });
+
+  const months=[];let cm=null,ms=0;
+  allDays.forEach((d,i)=>{
+    const mo=d.toLocaleString('default',{month:'short',year:'2-digit'});
+    if(mo!==cm){if(cm)months.push({label:cm,start:ms,end:i-1});cm=mo;ms=i;}
+  });
+  if(cm)months.push({label:cm,start:ms,end:allDays.length-1});
+
+  const isWknd=d=>d.getDay()===0||d.getDay()===6;
+  const DOW=['Su','M','T','W','T','F','Sa'];
+
+  const charA=artists.filter(a=>a.group==='Character');
+  const tdA=artists.filter(a=>a.group==='3D');
+
+  let html=`
+  ${overruns.length?`<div class="orp"><div class="orp-t">⚠ DEADLINE OVERRUNS — ${overruns.length} task${overruns.length>1?'s':''}</div>${overruns.map(o=>`<div class="orp-i">${o}</div>`).join('')}</div>`:''}
+  <div class="legend">
+    <div class="li"><div class="ld" style="background:#E53935"></div>Overruns</div>
+    <div class="li"><div class="ld" style="background:#0c1520;border:1px solid #1e3a8a"></div>Saturday</div>
+    <div class="li"><div class="ld" style="background:#180c0c;border:1px solid #7f1d1d"></div>Sunday</div>
+    <div class="li"><div class="ld" style="background:#1a1200;border:1px solid #78350f"></div>Public Holiday</div>
+    <div class="li"><div class="ld" style="background:#0c1a2e;border:1px solid #1e40af"></div><span style="font-size:9px;margin-right:1px">P</span>Planned Leave</div>
+    <div class="li"><div class="ld" style="background:#3d0808;border:1px solid #991b1b"></div><span style="font-size:9px;margin-right:1px">!</span>Unplanned Leave</div>
+    <div class="li"><div class="ld" style="background:#7c2d12;border:1px solid #ea580c"></div>Deadline Day</div>
+  </div>
+  <div id="gw"><table class="gt">`;
+
+  html+=`<tr>
+    <td class="cg ghdr"></td>
+    <td class="ca ghdr ghdr-l" style="font-size:11px">GWD REWARD...</td>
+    <td class="ct ghdr ghdr-l" style="font-size:11px">Prod Start: ${fmtShort(parseDate(document.getElementById('prodStart').value))}</td>
+    ${allDays.map(d=>`<td class="${isWknd(d)?'cw':'cd'} ghdr"></td>`).join('')}
+  </tr>`;
+
+  const obS=allDays.filter(d=>d<=dlOB).length;
+  const clS=allDays.filter(d=>d>dlOB).length;
+  html+=`<tr style="height:15px">
+    <td class="cg ghdr"></td><td class="ca ghdr"></td><td class="ct ghdr"></td>
+    ${obS?`<td colspan="${obS}" style="background:#7f1d1d;color:#fca5a5;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;text-align:center;vertical-align:middle">⚠ CB DEADLINE ${fmtShort(dlCB)} PASSED  |  OPEN BETA — Deadline: ${fmtShort(dlOB)}</td>`:''}
+    ${clS?`<td colspan="${clS}" style="background:#3d2a00;color:#fcd34d;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;text-align:center;vertical-align:middle">◀ COMMERCIAL LAUNCH — Deadline: ${fmtShort(dlCL)} ▶</td>`:''}
+  </tr>`;
+
+  html+=`<tr style="height:13px"><td class="cg ghdr"></td><td class="ca ghdr"></td><td class="ct ghdr"></td>${months.map(m=>`<td colspan="${m.end-m.start+1}" class="g-month">${m.label}</td>`).join('')}</tr>`;
+  html+=`<tr style="height:12px"><td class="cg ghdr"></td><td class="ca ghdr ghdr-l">Artist</td><td class="ct ghdr ghdr-l">Task</td>
+    ${allDays.map(d=>{const b=calBg(d);return`<td class="${isWknd(d)?'cw':'cd'}" style="background:${b.bg};color:${b.fc};font-family:'Space Mono',monospace;font-size:7px;text-align:center;vertical-align:middle;font-weight:${sameDay(d,dlOB)||sameDay(d,dlCL)||sameDay(d,dlCB)||sameDay(d,dlTB)?700:400}">${DOW[d.getDay()]}</td>`;}).join('')}
+  </tr>`;
+
+  html+=`<tr style="height:13px"><td class="cg ghdr"></td><td class="ca ghdr ghdr-l">Group</td><td class="ct ghdr ghdr-l">Task Name</td>
+    ${allDays.map(d=>{const b=calBg(d);return`<td class="${isWknd(d)?'cw':'cd'}" style="background:${b.bg};color:${b.fc};font-family:'Space Mono',monospace;font-size:7px;text-align:center;vertical-align:middle;font-weight:${sameDay(d,dlOB)||sameDay(d,dlCL)||sameDay(d,dlCB)||sameDay(d,dlTB)?700:400}">${d.getDate()}</td>`;}).join('')}
+  </tr>`;
+
+  function renderSection(sArtists,label,secBg){
+    html+=`<tr class="g-sec">
+      <td class="cg" style="background:${secBg}"></td>
+      <td class="ca" style="background:${secBg};color:#64748b;font-weight:700"></td>
+      <td class="ct" style="background:${secBg};color:#64748b;font-weight:700">${label}</td>
+      <td colspan="${allDays.length}" style="background:${secBg}"></td>
+    </tr>`;
+    sArtists.forEach(artist=>{
+      const ai=artists.findIndex(a=>a.name===artist.name);
+      const sched=schedules[artist.name]||[];
+      if(!sched.length) return;
+      sched.forEach(({taskName,phase,taskDays,dl,endDate},ti)=>{
+        const hex=getColor(ai,ti);
+        const fc=textCol(hex);
+        // Tooltip update
+        const tTitle = `${taskName} | Ends: ${fmtShort(endDate)} (Target: ${fmtShort(dl)})`;
+        html+=`<tr class="g-row">
+          <td class="cg" style="background:${secBg}"></td>
+          <td class="ca g-artist">${ti===0?artist.name:''}</td>
+          <td class="ct g-task" style="background:${hex};color:${fc}" title="${tTitle}">${taskName}</td>
+          ${allDays.map(d=>{
+            const dk=dateKey(d);
+            if(taskDays.has(dk)){
+              const over=d>dl;
+              return`<td class="${isWknd(d)?'cw':'cd'} g-bar" style="background:${over?'#b91c1c':hex};color:${over?'#fff':fc}">▓</td>`;
+            }
+            const{bg,type}=artistCellBg(artist.name,d);
+            const mark=type==='planned'?`<span style="color:#3b82f6;font-size:6px;line-height:1">P</span>`:type==='unplanned'?`<span style="color:#ef4444;font-size:6px;line-height:1">!</span>`:type==='hol'?`<span style="color:#f59e0b;font-size:6px;line-height:1">H</span>`:'';
+            return`<td class="${isWknd(d)?'cw':'cd'}" style="background:${bg};text-align:center;vertical-align:middle">${mark}</td>`;
+          }).join('')}
+        </tr>`;
+      });
+      html+=`<tr class="g-sep">
+        <td class="cg" style="background:#1a2235"></td>
+        <td class="ca" style="background:#1a2235"></td>
+        <td class="ct" style="background:#1a2235"></td>
+        <td colspan="${allDays.length}" style="background:#1a2235;height:2px"></td>
+      </tr>`;
+    });
+  }
+
+  if(charA.length) renderSection(charA,'◈  CHARACTER ARTISTS','#0e1420');
+  if(tdA.length)   renderSection(tdA,'◈  3D ARTISTS','#0a1208');
+  html+=`</table></div>`;
+  area.innerHTML=html;
+}
+
+// ═══════════════════════════ EXPORTS ══════════════════════════
+function exportCSV(){
+  if(!lastSchedule){alert('Generate first');return;}
+  // NEW FEATURE: Added "System Notes" column
+  const rows=[['Artist','Group','Task','Phase','Mandays','Start','End','Deadline','Status','Days Late','System Notes']];
+  
+  const currentPlanName = plans.find(p => p.id === activePlanId)?.name || "Plan";
+  
+  artists.forEach(a=>{
+    (lastSchedule.schedules[a.name]||[]).forEach(({taskName,phase,mandays,startDate,endDate,dl})=>{
+      let late=0;
+      let notes = '';
+      if(endDate>dl){
+        let s=addDays(dl,1);
+        while(s<=endDate){if(lastSchedule.isWorkingFor(a.name,s))late++;s=addDays(s,1);}}
+        notes = `DELAYED: Must re-evaluate deadline to ${fmtDate(endDate)}`;
+      rows.push([a.name,a.group,taskName,phase,mandays,fmtDate(startDate),fmtDate(endDate),fmtDate(dl),endDate>dl?'OVERRUN':'ON TRACK',late||'', notes]);
+    });
+  });
+  rows.push([]);rows.push(['=== LEAVE LOG ===']);
+  rows.push(['Artist','Type','From','To','Note']);
+  leaves.forEach(l=>rows.push([l.artist==='__all__'?'All Artists':l.artist,l.type,l.from,l.to,l.note]));
+  const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`GWD_Gantt_${currentPlanName.replace(/\s+/g, '_')}.csv`;
+  a.click();
+}
+
+function exportViewerHTML() {
+  if(!lastSchedule) { alert('Generate first'); return; }
+  
+  const currentPlanName = plans.find(p => p.id === activePlanId)?.name || "Plan";
+  const css = document.querySelector('style').innerHTML;
+  
+  // Grab the rendered HTML and dynamically strip out all drag-and-drop UI functionality
+  let ganttHtml = document.getElementById('ganttArea').innerHTML;
+  ganttHtml = ganttHtml.replace(/draggable="true"/g, '');
+  ganttHtml = ganttHtml.replace(/ondragstart="[^"]*"/g, '');
+  ganttHtml = ganttHtml.replace(/ondragover="[^"]*"/g, '');
+  ganttHtml = ganttHtml.replace(/ondragleave="[^"]*"/g, '');
+  ganttHtml = ganttHtml.replace(/ondrop="[^"]*"/g, '');
+  ganttHtml = ganttHtml.replace(/<span class="drag-handle"[^>]*>⠿<\/span>/g, '');
+
+  const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GWD Viewer - ${currentPlanName}</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>${css}</style>
+<style>
+  /* Read-only overrides */
+  body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: var(--bg); }
+  .gantt-wrap { flex: 1; overflow: auto; position: relative; padding: 20px; }
+  .empty-state { display: none; }
+</style>
+</head>
+<body>
+  <div class="hdr">
+    <div class="logo">GWD <em>GANTT</em> <span style="color:var(--accent2); font-size:11px; margin-left:8px; border: 1px solid var(--accent2); padding: 2px 6px; border-radius: 4px;">READ-ONLY VIEWER</span></div>
+    <div style="color:var(--muted);font-size:12px; margin-left:20px; font-weight: 600;">Plan: ${currentPlanName}</div>
+    <div style="margin-left:auto; color:var(--muted); font-size:11px;">Generated on ${new Date().toLocaleDateString()}</div>
+  </div>
+  <div class="gantt-wrap">
+    ${ganttHtml}
+  </div>
+</body>
+</html>`;
+
+  const blob = new Blob([htmlContent], {type: 'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `GWD_${currentPlanName.replace(/\s+/g, '_')}_Viewer.html`;
+  a.click();
+}
+
+// ═══════════════════════════ INIT ════════════════════════════
+initSystem();
+</script>
+</body>
+</html>
